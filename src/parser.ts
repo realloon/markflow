@@ -48,8 +48,6 @@ export class MarkdownStream {
   write(chunk: string): string {
     if (this.ended)
       throw new Error('Cannot write after the Markdown stream has ended')
-    if (typeof chunk !== 'string')
-      throw new TypeError('Markdown chunk must be a string')
     if (chunk.length === 0) return ''
 
     const output: string[] = []
@@ -74,8 +72,6 @@ export class MarkdownStream {
   }
 
   end(chunk = ''): string {
-    if (typeof chunk !== 'string')
-      throw new TypeError('Markdown chunk must be a string')
     const output: string[] = []
     if (chunk.length > 0) output.push(this.write(chunk))
     if (this.ended) throw new Error('Markdown stream has already ended')
@@ -345,7 +341,5 @@ export function markdownToHtml(
   markdown: string,
   options: MarkdownOptions = {},
 ): string {
-  if (typeof markdown !== 'string')
-    throw new TypeError('Markdown input must be a string')
   return new MarkdownStream(options).end(markdown)
 }

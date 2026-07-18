@@ -216,7 +216,6 @@ describe('MarkdownStream', () => {
 
   test('rejects invalid lifecycle operations and can be reset', () => {
     const stream = new MarkdownStream()
-    expect(() => stream.write(1 as unknown as string)).toThrow(TypeError)
     expect(stream.end('text')).toBe('<p>text</p>\n')
     expect(() => stream.write('more')).toThrow('Cannot write')
     expect(() => stream.end()).toThrow('already ended')
