@@ -1,7 +1,2 @@
 export type { MarkdownOptions } from './types/index.js'
-export {
-  createMarkdownTransform,
-  markdownToHtml,
-  MarkdownStream,
-  renderMarkdownStream,
-} from './parser.js'
+export { markdownToHtml, MarkdownStream } from './parser.js'

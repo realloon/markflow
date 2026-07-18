@@ -1,9 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
-  createMarkdownTransform,
   markdownToHtml,
   MarkdownStream,
-  renderMarkdownStream,
 } from "../src/index.ts";
 
 describe("markdownToHtml", () => {
@@ -145,6 +143,35 @@ describe("MarkdownStream", () => {
     expect(stream.end("```" )).toBe("</code></pre>\n");
   });
 
+  test("exposes complete HTML snapshots for progressive UI rendering", () => {
+    const stream = new MarkdownStream();
+
+    stream.write("# Hel");
+    expect(stream.html).toBe("<h1>Hel</h1>\n");
+
+    stream.write("lo\n\nA **partial");
+    expect(stream.html).toBe(
+      "<h1>Hello</h1>\n<p>A **partial</p>\n",
+    );
+
+    stream.write("** paragraph");
+    expect(stream.html).toBe(
+      "<h1>Hello</h1>\n<p>A <strong>partial</strong> paragraph</p>\n",
+    );
+    expect(stream.end()).toBe(
+      "<p>A <strong>partial</strong> paragraph</p>\n",
+    );
+    expect(stream.html).toBe(
+      "<h1>Hello</h1>\n<p>A <strong>partial</strong> paragraph</p>\n",
+    );
+
+    const code = new MarkdownStream();
+    code.write("```ts\nconst value");
+    expect(code.html).toBe(
+      '<pre><code class="language-ts">const value\n</code></pre>\n',
+    );
+  });
+
   test("rejects invalid lifecycle operations and can be reset", () => {
     const stream = new MarkdownStream();
     expect(() => stream.write(1 as unknown as string)).toThrow(TypeError);
@@ -154,30 +181,4 @@ describe("MarkdownStream", () => {
     stream.reset();
     expect(stream.end("again")).toBe("<p>again</p>\n");
   });
-});
-
-test("renderMarkdownStream exposes an async iterable", async () => {
-  const output: string[] = [];
-  for await (const html of renderMarkdownStream(["# A\n", "\ntext"])) output.push(html);
-  expect(output.join("")).toBe("<h1>A</h1>\n<p>text</p>\n");
-});
-
-test("createMarkdownTransform works with Web Streams", async () => {
-  const input = new ReadableStream<string>({
-    start(controller) {
-      controller.enqueue("# Web\n\n");
-      controller.enqueue("stream");
-      controller.close();
-    },
-  });
-  const reader = input.pipeThrough(createMarkdownTransform()).getReader();
-  let output = "";
-
-  for (;;) {
-    const result = await reader.read();
-    if (result.done) break;
-    output += result.value;
-  }
-
-  expect(output).toBe("<h1>Web</h1>\n<p>stream</p>\n");
 });

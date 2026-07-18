@@ -30,6 +30,22 @@ interface TableBlock {
 type ActiveBlock = FenceBlock | LinesBlock | ListBlock | TableBlock
 type Alignment = 'center' | 'left' | 'right' | null
 
+function cloneActiveBlock(active: ActiveBlock | null): ActiveBlock | null {
+  if (active === null) return null
+
+  switch (active.type) {
+    case 'fence':
+      return { ...active }
+    case 'table':
+      return { ...active, alignments: [...active.alignments] }
+    case 'blockquote':
+    case 'indented-code':
+    case 'paragraph':
+    case 'list':
+      return { ...active, lines: [...active.lines] }
+  }
+}
+
 interface FenceOpen {
   info: string
   length: number
@@ -249,16 +265,28 @@ function stripTightParagraph(html: string): string {
   return close === -1 ? html : html.slice(3, close) + html.slice(close + 5)
 }
 
-/** Incremental parser. Each returned fragment is final and is never revised later. */
+/** Incremental parser for progressively rendered Markdown. */
 export class MarkdownStream {
   private active: ActiveBlock | null = null
   private depth = 0
   private ended = false
   private readonly lineParts: string[] = []
   private readonly options: ResolvedMarkdownOptions
+  private output = ''
 
   constructor(options: MarkdownOptions = {}) {
     this.options = resolveOptions(options)
+  }
+
+  /** Complete HTML snapshot, including a preview of the unfinished block. */
+  get html(): string {
+    if (this.ended) return this.output
+
+    const preview = new MarkdownStream(this.options)
+    preview.active = cloneActiveBlock(this.active)
+    preview.depth = this.depth
+    preview.lineParts.push(...this.lineParts)
+    return this.output + preview.end()
   }
 
   write(chunk: string): string {
@@ -284,7 +312,9 @@ export class MarkdownStream {
     }
 
     if (start < chunk.length) this.lineParts.push(chunk.slice(start))
-    return output.join('')
+    const html = output.join('')
+    this.output += html
+    return html
   }
 
   end(chunk = ''): string {
@@ -294,14 +324,18 @@ export class MarkdownStream {
     if (chunk.length > 0) output.push(this.write(chunk))
     if (this.ended) throw new Error('Markdown stream has already ended')
 
+    const tail: string[] = []
     if (this.lineParts.length > 0) {
       const line = this.consumeLineParts('')
-      output.push(
+      tail.push(
         this.consumeLine(line.endsWith('\r') ? line.slice(0, -1) : line),
       )
     }
 
-    output.push(this.finishActive())
+    tail.push(this.finishActive())
+    const tailHtml = tail.join('')
+    this.output += tailHtml
+    output.push(tailHtml)
     this.ended = true
     return output.join('')
   }
@@ -311,6 +345,7 @@ export class MarkdownStream {
     this.depth = 0
     this.ended = false
     this.lineParts.length = 0
+    this.output = ''
   }
 
   private consumeLineParts(last: string): string {
@@ -550,34 +585,4 @@ export function markdownToHtml(
   if (typeof markdown !== 'string')
     throw new TypeError('Markdown input must be a string')
   return new MarkdownStream(options).end(markdown)
-}
-
-export async function* renderMarkdownStream(
-  chunks: AsyncIterable<string> | Iterable<string>,
-  options: MarkdownOptions = {},
-): AsyncGenerator<string> {
-  const stream = new MarkdownStream(options)
-  for await (const chunk of chunks) {
-    const html = stream.write(chunk)
-    if (html !== '') yield html
-  }
-
-  const html = stream.end()
-  if (html !== '') yield html
-}
-
-export function createMarkdownTransform(
-  options: MarkdownOptions = {},
-): TransformStream<string, string> {
-  const stream = new MarkdownStream(options)
-  return new TransformStream<string, string>({
-    flush(controller) {
-      const html = stream.end()
-      if (html !== '') controller.enqueue(html)
-    },
-    transform(chunk, controller) {
-      const html = stream.write(chunk)
-      if (html !== '') controller.enqueue(html)
-    },
-  })
 }
