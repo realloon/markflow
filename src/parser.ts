@@ -1,9 +1,14 @@
-import type { MarkdownOptions, ResolvedMarkdownOptions } from './types/index.js'
+import type {
+  CodeHighlightStream,
+  MarkdownOptions,
+  ResolvedMarkdownOptions,
+} from './types/index.js'
 import { escapeAttribute, escapeHtml } from './escape.js'
 import { renderInline } from './inline.js'
 import { resolveOptions } from './types/index.js'
 
 interface FenceBlock {
+  highlighter: CodeHighlightStream | null
   length: number
   marker: '`' | '~'
   type: 'fence'
@@ -35,7 +40,7 @@ function cloneActiveBlock(active: ActiveBlock | null): ActiveBlock | null {
 
   switch (active.type) {
     case 'fence':
-      return { ...active }
+      return { ...active, highlighter: null }
     case 'table':
       return { ...active, alignments: [...active.alignments] }
     case 'blockquote':
@@ -365,10 +370,12 @@ export class MarkdownStream {
 
       if (active?.type === 'fence') {
         if (isFenceClose(line, active)) {
+          output += active.highlighter?.finish() ?? ''
           this.active = null
           output += '</code></pre>\n'
         } else {
-          output += `${escapeHtml(line)}\n`
+          output +=
+            active.highlighter?.write(`${line}\n`) ?? `${escapeHtml(line)}\n`
         }
         continue
       }
@@ -466,7 +473,12 @@ export class MarkdownStream {
           language === ''
             ? ''
             : ` class="language-${escapeAttribute(language)}"`
+        const highlighter =
+          language !== '' && this.options.codeHighlighter?.has(language)
+            ? this.options.codeHighlighter.createHighlighter(language)
+            : null
         this.active = {
+          highlighter,
           length: fence.length,
           marker: fence.marker,
           type: 'fence',
@@ -534,7 +546,7 @@ export class MarkdownStream {
       case 'table':
         return '</tbody>\n</table>\n'
       case 'fence':
-        return '</code></pre>\n'
+        return `${active.highlighter?.finish() ?? ''}</code></pre>\n`
     }
   }
 
