@@ -35,7 +35,7 @@ export class MarkdownStream {
   }
 
   /** Complete HTML snapshot, including a preview of the unfinished block. */
-  get html(): string {
+  get html() {
     if (this.ended) return this.output
 
     const preview = new MarkdownStream(this.options)
@@ -45,9 +45,11 @@ export class MarkdownStream {
     return this.output + preview.end()
   }
 
-  write(chunk: string): string {
-    if (this.ended)
+  write(chunk: string) {
+    if (this.ended) {
       throw new Error('Cannot write after the Markdown stream has ended')
+    }
+
     if (chunk.length === 0) return ''
 
     const output: string[] = []
@@ -71,7 +73,7 @@ export class MarkdownStream {
     return html
   }
 
-  end(chunk = ''): string {
+  end(chunk = '') {
     const output: string[] = []
     if (chunk.length > 0) output.push(this.write(chunk))
     if (this.ended) throw new Error('Markdown stream has already ended')
@@ -92,7 +94,7 @@ export class MarkdownStream {
     return output.join('')
   }
 
-  reset(): void {
+  reset() {
     this.active = null
     this.depth = 0
     this.ended = false
@@ -100,14 +102,14 @@ export class MarkdownStream {
     this.output = ''
   }
 
-  private consumeLineParts(last: string): string {
+  private consumeLineParts(last: string) {
     this.lineParts.push(last)
     const line = this.lineParts.join('')
     this.lineParts.length = 0
     return line
   }
 
-  private consumeLine(line: string): string {
+  private consumeLine(line: string) {
     let output = ''
     let reprocess = true
 
@@ -274,7 +276,7 @@ export class MarkdownStream {
     return output
   }
 
-  private finishActive(): string {
+  private finishActive() {
     const active = this.active
     if (!active) return ''
     this.active = null
@@ -297,7 +299,7 @@ export class MarkdownStream {
     }
   }
 
-  private renderList(block: ListBlock): string {
+  private renderList(block: ListBlock) {
     const items = collectListItems(block, this.options.gfm)
     const hasTasks = this.options.gfm && items.some(item => item.task)
     const loose = items.some(item => item.lines.includes(''))
@@ -328,7 +330,7 @@ export class MarkdownStream {
     return `${html}</${block.kind}>\n`
   }
 
-  private renderNested(source: string): string {
+  private renderNested(source: string) {
     if (this.depth >= 32)
       throw new RangeError('Markdown nesting exceeds 32 levels')
     const stream = new MarkdownStream(this.options)
@@ -340,6 +342,6 @@ export class MarkdownStream {
 export function markdownToHtml(
   markdown: string,
   options: MarkdownOptions = {},
-): string {
+) {
   return new MarkdownStream(options).end(markdown)
 }

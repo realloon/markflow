@@ -4,7 +4,7 @@ import type {
 } from './types/index.js'
 import { renderInline } from './inline.js'
 
-export interface FenceBlock {
+interface FenceBlock {
   highlighter: CodeHighlightStream | null
   length: number
   marker: '`' | '~'
@@ -80,7 +80,7 @@ export function parseFenceOpen(line: string): FenceOpen | null {
   return { info, length, marker }
 }
 
-export function isFenceClose(line: string, block: FenceBlock): boolean {
+export function isFenceClose(line: string, block: FenceBlock) {
   let index = 0
   while (index < 3 && line.charAt(index) === ' ') index++
 
@@ -110,14 +110,12 @@ export function parseListMarker(line: string): ListMarker | null {
   }
 }
 
-export function parseBlockquoteLine(line: string): string | null {
+export function parseBlockquoteLine(line: string) {
   const match = /^ {0,3}>[ \t]?(.*)$/.exec(line)
   return match?.[1] ?? null
 }
 
-export function parseHeading(
-  line: string,
-): { content: string; level: number } | null {
+export function parseHeading(line: string) {
   const match = /^ {0,3}(#{1,6})(?:[ \t]+(.*)|[ \t]*)$/.exec(line)
   if (!match) return null
   return {
@@ -126,13 +124,13 @@ export function parseHeading(
   }
 }
 
-export function setextLevel(line: string): 1 | 2 | null {
+export function setextLevel(line: string) {
   const match = /^ {0,3}(=+|-+)[ \t]*$/.exec(line)
   if (!match) return null
   return match[1]!.charAt(0) === '=' ? 1 : 2
 }
 
-export function isThematicBreak(line: string): boolean {
+export function isThematicBreak(line: string) {
   const value = line.trim().replace(/[ \t]/g, '')
   return (
     value.length >= 3 &&
@@ -140,15 +138,15 @@ export function isThematicBreak(line: string): boolean {
   )
 }
 
-export function isIndented(line: string): boolean {
+export function isIndented(line: string) {
   return line.startsWith('    ') || line.startsWith('\t')
 }
 
-export function stripIndent(line: string): string {
+export function stripIndent(line: string) {
   return line.startsWith('\t') ? line.slice(1) : line.slice(4)
 }
 
-export function startsInterruptingBlock(line: string): boolean {
+export function startsInterruptingBlock(line: string) {
   const list = parseListMarker(line)
   return (
     parseFenceOpen(line) !== null ||
@@ -159,7 +157,7 @@ export function startsInterruptingBlock(line: string): boolean {
   )
 }
 
-function splitTableRow(line: string): string[] {
+function splitTableRow(line: string) {
   let value = line.trim()
   if (value.startsWith('|')) value = value.slice(1)
   if (value.endsWith('|') && !value.endsWith('\\|')) value = value.slice(0, -1)
@@ -187,10 +185,7 @@ function splitTableRow(line: string): string[] {
   return cells
 }
 
-export function parseTableAlignments(
-  line: string,
-  header: string,
-): Alignment[] | null {
+export function parseTableAlignments(line: string, header: string) {
   if (!line.includes('|') && !header.includes('|')) return null
 
   const columns = splitTableRow(line)
@@ -213,7 +208,7 @@ export function parseTableAlignments(
   return alignments
 }
 
-function alignmentAttribute(alignment: Alignment): string {
+function alignmentAttribute(alignment: Alignment) {
   return alignment === null ? '' : ` align="${alignment}"`
 }
 
@@ -222,7 +217,7 @@ export function renderTableRow(
   tag: 'td' | 'th',
   alignments: Alignment[],
   options: ResolvedMarkdownOptions,
-): string {
+) {
   const cells = splitTableRow(line)
   let html = '<tr>\n'
 
@@ -240,7 +235,7 @@ interface ListItem {
   checked: boolean
 }
 
-export function collectListItems(block: ListBlock, gfm: boolean): ListItem[] {
+export function collectListItems(block: ListBlock, gfm: boolean) {
   const items: ListItem[] = []
 
   for (const line of block.lines) {
@@ -265,7 +260,7 @@ export function collectListItems(block: ListBlock, gfm: boolean): ListItem[] {
   return items
 }
 
-export function stripTightParagraph(html: string): string {
+export function stripTightParagraph(html: string) {
   if (!html.startsWith('<p>')) return html
   const close = html.indexOf('</p>\n', 3)
   return close === -1 ? html : html.slice(3, close) + html.slice(close + 5)

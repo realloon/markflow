@@ -15,7 +15,7 @@ interface DelimiterQueue {
   items: number[]
 }
 
-function countRun(source: string, index: number, character: string): number {
+function countRun(source: string, index: number, character: string) {
   let length = 0
   while (source.charAt(index + length) === character) length++
   return length

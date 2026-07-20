@@ -2,13 +2,19 @@ import type { ResolvedMarkdownOptions } from './types/index.js'
 import { escapeAttribute, escapeHtml } from './escape.js'
 import { buildInlinePairs } from './inline-pairs.js'
 
+interface LinkDestination {
+  end: number
+  title: string | undefined
+  url: string
+}
+
 const ENTITY = /^&(?:#[0-9]{1,7}|#x[0-9a-f]{1,6}|[a-z][a-z0-9]{1,31});/i
 const EMAIL =
   /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+$/i
 const HTML_TAG = /^(?:<!--[\s\S]*-->|<\/?[A-Za-z][^<>]*>)$/
 const PUNCTUATION = /[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/
 
-function findClosingParenthesis(source: string, open: number): number {
+function findClosingParenthesis(source: string, open: number) {
   let depth = 0
 
   for (let index = open + 1; index < source.length; index++) {
@@ -24,12 +30,6 @@ function findClosingParenthesis(source: string, open: number): number {
   }
 
   return -1
-}
-
-interface LinkDestination {
-  end: number
-  title: string | undefined
-  url: string
 }
 
 function parseLinkDestination(
@@ -54,7 +54,7 @@ function parseLinkDestination(
   return { end: end + 1, title, url }
 }
 
-function safeUrl(url: string): string | null {
+function safeUrl(url: string) {
   const value = url.trim()
   let probe = value.replace(/[\u0000-\u0020\u007f]+/g, '').toLowerCase()
 
@@ -81,7 +81,7 @@ function safeUrl(url: string): string | null {
   return value
 }
 
-function normalizeCodeSpan(value: string): string {
+function normalizeCodeSpan(value: string) {
   const normalized = value.replace(/\n/g, ' ')
   if (
     normalized.length > 2 &&
@@ -94,13 +94,13 @@ function normalizeCodeSpan(value: string): string {
   return normalized
 }
 
-function plainLabel(value: string): string {
+function plainLabel(value: string) {
   return value
     .replace(/\\([!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~])/g, '$1')
     .replace(/[*_~`]/g, '')
 }
 
-function trimBareUrl(value: string): string {
+function trimBareUrl(value: string) {
   let end = value.length
   while (end > 0 && /[.,!?;:]/.test(value.charAt(end - 1))) end--
 
@@ -115,10 +115,7 @@ function trimBareUrl(value: string): string {
   return value.slice(0, end)
 }
 
-function renderBareUrl(
-  source: string,
-  index: number,
-): { end: number; html: string } | null {
+function renderBareUrl(source: string, index: number) {
   const prefix = source.startsWith('https://', index)
     ? 'https://'
     : source.startsWith('http://', index)
@@ -145,7 +142,7 @@ function renderRange(
   source: string,
   options: ResolvedMarkdownOptions,
   depth: number,
-): string {
+) {
   if (depth > 32) return escapeHtml(source)
 
   const pairs = buildInlinePairs(source, options.gfm)
@@ -315,9 +312,6 @@ function renderRange(
   return output.join('')
 }
 
-export function renderInline(
-  source: string,
-  options: ResolvedMarkdownOptions,
-): string {
+export function renderInline(source: string, options: ResolvedMarkdownOptions) {
   return renderRange(source, options, 0)
 }
