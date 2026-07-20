@@ -7,8 +7,6 @@
     "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
     "verbatimModuleSyntax": true,
-    "sourceMap": true,
-    "declarationMap": false,
     "skipLibCheck": true
   },
   "include": ["src"]
