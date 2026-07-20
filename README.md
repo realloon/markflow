@@ -1,5 +1,7 @@
 # markflow
 
+[![](https://badgen.net/npm/v/@realloon/markflow)](https://www.npmjs.com/package/@realloon/markflow)
+
 An incremental Markdown parser for streaming output.
 
 ## Streaming rendering
@@ -25,7 +27,7 @@ Call `reset()` or create a new instance before starting a new message.
 
 ## Syntax highlighting
 
-markflow can be combined with Aura to stream syntax-highlighted code:
+markflow can be combined with [Aura](https://github.com/realloon/aura) to stream syntax-highlighted code:
 
 ```ts
 import { Aura, csharp } from 'aura'
