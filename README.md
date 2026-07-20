@@ -1,13 +1,11 @@
 # markflow
 
-[![](https://badgen.net/npm/v/@realloon/markflow)](https://www.npmjs.com/package/@realloon/markflow)
-
 An incremental Markdown parser for streaming output.
 
 ## Streaming rendering
 
 ```ts
-import { MarkdownStream } from 'markflow'
+import { MarkdownStream } from '@realloon/markflow'
 
 const stream = new MarkdownStream()
 const output = document.querySelector('#output')
@@ -30,8 +28,8 @@ Call `reset()` or create a new instance before starting a new message.
 markflow can be combined with [Aura](https://github.com/realloon/aura) to stream syntax-highlighted code:
 
 ```ts
-import { Aura, csharp } from 'aura'
-import { MarkdownStream } from 'markflow'
+import { Aura, csharp } from '@realloon/aura'
+import { MarkdownStream } from '@realloon/markflow'
 
 const aura = new Aura().register([csharp])
 const stream = new MarkdownStream({ highlighter: aura })
