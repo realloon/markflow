@@ -1,5 +1,9 @@
 {
-  "name": "markflow",
+  "name": "@realloon/markflow",
+  "description": "An incremental Markdown parser for streaming output.",
+  "publishConfig": {
+    "access": "public"
+  },
   "version": "0.2.0",
   "type": "module",
   "sideEffects": false,
