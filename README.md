@@ -1,6 +1,6 @@
 # markflow
 
-An incremental Markdown → HTML parser for streaming output from large language models.
+An incremental Markdown parser for streaming output.
 
 ## Streaming rendering
 
