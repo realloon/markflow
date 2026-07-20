@@ -223,8 +223,8 @@ export class MarkdownStream {
             ? ''
             : ` class="language-${escapeAttribute(language)}"`
         const highlighter =
-          language !== '' && this.#options.codeHighlighter?.has(language)
-            ? this.#options.codeHighlighter.createHighlighter(language)
+          language !== '' && this.#options.highlighter?.has(language)
+            ? this.#options.highlighter.createHighlighter(language)
             : null
         this.#active = {
           highlighter,

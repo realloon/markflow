@@ -51,7 +51,7 @@ describe('markdownToHtml', () => {
   test('streams complete fenced-code lines through a syntax highlighter', () => {
     const writes: string[] = []
     let finishes = 0
-    const codeHighlighter = {
+    const highlighter = {
       has: (language: string) => language === 'demo',
       createHighlighter: () => ({
         write(chunk: string) {
@@ -64,7 +64,7 @@ describe('markdownToHtml', () => {
         },
       }),
     }
-    const stream = new MarkdownStream({ codeHighlighter })
+    const stream = new MarkdownStream({ highlighter })
 
     stream.write('```demo\npartial')
     expect(writes).toEqual([])
@@ -85,7 +85,7 @@ describe('markdownToHtml', () => {
     expect(finishes).toBe(1)
 
     expect(
-      markdownToHtml('```unknown\nplain <code>\n```', { codeHighlighter }),
+      markdownToHtml('```unknown\nplain <code>\n```', { highlighter }),
     ).toBe(
       '<pre><code class="language-unknown">plain &lt;code&gt;\n</code></pre>\n',
     )

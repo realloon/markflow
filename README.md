@@ -32,7 +32,7 @@ import { Aura, csharp } from 'aura'
 import { MarkdownStream } from 'markflow'
 
 const aura = new Aura().register([csharp])
-const stream = new MarkdownStream({ codeHighlighter: aura })
+const stream = new MarkdownStream({ highlighter: aura })
 ```
 
 ## One-shot parsing
@@ -50,7 +50,7 @@ interface MarkdownOptions {
   breaks?: boolean // Render soft line breaks as <br>; defaults to false
   gfm?: boolean // Tables, task lists, strikethrough, and bare URLs; defaults to true
   allowHtml?: boolean // Pass through inline HTML; defaults to false
-  codeHighlighter?: CodeHighlighter // Optional streaming syntax highlighter
+  highlighter?: Highlighter // Optional streaming syntax highlighter
 }
 ```
 

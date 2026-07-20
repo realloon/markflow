@@ -1,11 +1,11 @@
-export interface CodeHighlightStream {
+export interface HighlighterStream {
   write(chunk: string): string
   finish(): string
 }
 
-export interface CodeHighlighter {
+export interface Highlighter {
   has(language: string): boolean
-  createHighlighter(language: string): CodeHighlightStream
+  createHighlighter(language: string): HighlighterStream
 }
 
 export interface MarkdownOptions {
@@ -16,14 +16,14 @@ export interface MarkdownOptions {
   /** Pass inline HTML through unchanged. Disabled by default. */
   allowHtml?: boolean
   /** Optional streaming syntax highlighter for fenced code blocks. */
-  codeHighlighter?: CodeHighlighter | undefined
+  highlighter?: Highlighter | undefined
 }
 
 export interface ResolvedMarkdownOptions {
   breaks: boolean
   gfm: boolean
   allowHtml: boolean
-  codeHighlighter: CodeHighlighter | undefined
+  highlighter: Highlighter | undefined
 }
 
 export function resolveOptions(
@@ -33,6 +33,6 @@ export function resolveOptions(
     breaks: options.breaks ?? false,
     gfm: options.gfm ?? true,
     allowHtml: options.allowHtml ?? false,
-    codeHighlighter: options.codeHighlighter,
+    highlighter: options.highlighter,
   }
 }

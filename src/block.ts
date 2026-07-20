@@ -1,11 +1,11 @@
 import type {
-  CodeHighlightStream,
+  HighlighterStream,
   ResolvedMarkdownOptions,
 } from './types/index.js'
 import { renderInline } from './inline.js'
 
 interface FenceBlock {
-  highlighter: CodeHighlightStream | null
+  highlighter: HighlighterStream | null
   length: number
   marker: '`' | '~'
   type: 'fence'
