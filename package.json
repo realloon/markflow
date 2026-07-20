@@ -1,6 +1,6 @@
 {
   "name": "@realloon/markflow",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "An incremental Markdown parser for streaming output.",
   "license": "MIT",
   "keywords": [
@@ -12,6 +12,7 @@
   },
   "type": "module",
   "sideEffects": false,
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
