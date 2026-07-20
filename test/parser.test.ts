@@ -50,7 +50,7 @@ describe('markdownToHtml', () => {
 
   test('streams complete fenced-code lines through a syntax highlighter', () => {
     const writes: string[] = []
-    let finishes = 0
+    let ends = 0
     const highlighter = {
       has: (language: string) => language === 'demo',
       createHighlighter: () => ({
@@ -58,8 +58,8 @@ describe('markdownToHtml', () => {
           writes.push(chunk)
           return `<mark>${chunk}</mark>`
         },
-        finish() {
-          finishes++
+        end() {
+          ends++
           return ''
         },
       }),
@@ -71,18 +71,18 @@ describe('markdownToHtml', () => {
     expect(stream.html).toBe(
       '<pre><code class="language-demo">partial\n</code></pre>\n',
     )
-    expect(finishes).toBe(0)
+    expect(ends).toBe(0)
 
     stream.write(' line\nnext')
     expect(writes).toEqual(['partial line\n'])
     expect(stream.html).toBe(
       '<pre><code class="language-demo"><mark>partial line\n</mark>next\n</code></pre>\n',
     )
-    expect(finishes).toBe(0)
+    expect(ends).toBe(0)
 
     expect(stream.end()).toBe('<mark>next\n</mark></code></pre>\n')
     expect(writes).toEqual(['partial line\n', 'next\n'])
-    expect(finishes).toBe(1)
+    expect(ends).toBe(1)
 
     expect(
       markdownToHtml('```unknown\nplain <code>\n```', { highlighter }),

@@ -119,7 +119,7 @@ export class MarkdownStream {
 
       if (active?.type === 'fence') {
         if (isFenceClose(line, active)) {
-          output += active.highlighter?.finish() ?? ''
+          output += active.highlighter?.end() ?? ''
           this.#active = null
           output += '</code></pre>\n'
         } else {
@@ -295,7 +295,7 @@ export class MarkdownStream {
       case 'table':
         return '</tbody>\n</table>\n'
       case 'fence':
-        return `${active.highlighter?.finish() ?? ''}</code></pre>\n`
+        return `${active.highlighter?.end() ?? ''}</code></pre>\n`
     }
   }
 

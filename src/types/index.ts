@@ -1,6 +1,6 @@
 export interface HighlighterStream {
   write(chunk: string): string
-  finish(): string
+  end(): string
 }
 
 export interface Highlighter {
