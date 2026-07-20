@@ -23,30 +23,30 @@ import { resolveOptions } from './types/index.js'
 
 /** Incremental parser for progressively rendered Markdown. */
 export class MarkdownStream {
-  private active: ActiveBlock | null = null
-  private depth = 0
-  private ended = false
-  private readonly lineParts: string[] = []
-  private readonly options: ResolvedMarkdownOptions
-  private output = ''
+  #active: ActiveBlock | null = null
+  #depth = 0
+  #ended = false
+  readonly #lineParts: string[] = []
+  readonly #options: ResolvedMarkdownOptions
+  #output = ''
 
   constructor(options: MarkdownOptions = {}) {
-    this.options = resolveOptions(options)
+    this.#options = resolveOptions(options)
   }
 
   /** Complete HTML snapshot, including a preview of the unfinished block. */
   get html() {
-    if (this.ended) return this.output
+    if (this.#ended) return this.#output
 
-    const preview = new MarkdownStream(this.options)
-    preview.active = cloneActiveBlock(this.active)
-    preview.depth = this.depth
-    preview.lineParts.push(...this.lineParts)
-    return this.output + preview.end()
+    const preview = new MarkdownStream(this.#options)
+    preview.#active = cloneActiveBlock(this.#active)
+    preview.#depth = this.#depth
+    preview.#lineParts.push(...this.#lineParts)
+    return this.#output + preview.end()
   }
 
   write(chunk: string) {
-    if (this.ended) {
+    if (this.#ended) {
       throw new Error('Cannot write after the Markdown stream has ended')
     }
 
@@ -59,68 +59,68 @@ export class MarkdownStream {
     while (newline !== -1) {
       const part = chunk.slice(start, newline)
       const line =
-        this.lineParts.length === 0 ? part : this.consumeLineParts(part)
+        this.#lineParts.length === 0 ? part : this.#consumeLineParts(part)
       output.push(
-        this.consumeLine(line.endsWith('\r') ? line.slice(0, -1) : line),
+        this.#consumeLine(line.endsWith('\r') ? line.slice(0, -1) : line),
       )
       start = newline + 1
       newline = chunk.indexOf('\n', start)
     }
 
-    if (start < chunk.length) this.lineParts.push(chunk.slice(start))
+    if (start < chunk.length) this.#lineParts.push(chunk.slice(start))
     const html = output.join('')
-    this.output += html
+    this.#output += html
     return html
   }
 
   end(chunk = '') {
     const output: string[] = []
     if (chunk.length > 0) output.push(this.write(chunk))
-    if (this.ended) throw new Error('Markdown stream has already ended')
+    if (this.#ended) throw new Error('Markdown stream has already ended')
 
     const tail: string[] = []
-    if (this.lineParts.length > 0) {
-      const line = this.consumeLineParts('')
+    if (this.#lineParts.length > 0) {
+      const line = this.#consumeLineParts('')
       tail.push(
-        this.consumeLine(line.endsWith('\r') ? line.slice(0, -1) : line),
+        this.#consumeLine(line.endsWith('\r') ? line.slice(0, -1) : line),
       )
     }
 
-    tail.push(this.finishActive())
+    tail.push(this.#finishActive())
     const tailHtml = tail.join('')
-    this.output += tailHtml
+    this.#output += tailHtml
     output.push(tailHtml)
-    this.ended = true
+    this.#ended = true
     return output.join('')
   }
 
   reset() {
-    this.active = null
-    this.depth = 0
-    this.ended = false
-    this.lineParts.length = 0
-    this.output = ''
+    this.#active = null
+    this.#depth = 0
+    this.#ended = false
+    this.#lineParts.length = 0
+    this.#output = ''
   }
 
-  private consumeLineParts(last: string) {
-    this.lineParts.push(last)
-    const line = this.lineParts.join('')
-    this.lineParts.length = 0
+  #consumeLineParts(last: string) {
+    this.#lineParts.push(last)
+    const line = this.#lineParts.join('')
+    this.#lineParts.length = 0
     return line
   }
 
-  private consumeLine(line: string) {
+  #consumeLine(line: string) {
     let output = ''
     let reprocess = true
 
     while (reprocess) {
       reprocess = false
-      const active = this.active
+      const active = this.#active
 
       if (active?.type === 'fence') {
         if (isFenceClose(line, active)) {
           output += active.highlighter?.finish() ?? ''
-          this.active = null
+          this.#active = null
           output += '</code></pre>\n'
         } else {
           output +=
@@ -133,9 +133,9 @@ export class MarkdownStream {
         const isRow =
           line !== '' && (active.alignments.length === 1 || line.includes('|'))
         if (isRow && (line.includes('|') || !startsInterruptingBlock(line))) {
-          output += renderTableRow(line, 'td', active.alignments, this.options)
+          output += renderTableRow(line, 'td', active.alignments, this.#options)
         } else {
-          output += this.finishActive()
+          output += this.#finishActive()
           reprocess = true
         }
         continue
@@ -144,22 +144,22 @@ export class MarkdownStream {
       if (active?.type === 'paragraph') {
         const level = active.lines.length === 1 ? setextLevel(line) : null
         if (level !== null) {
-          this.active = null
-          output += `<h${level}>${renderInline(active.lines[0]!, this.options)}</h${level}>\n`
+          this.#active = null
+          output += `<h${level}>${renderInline(active.lines[0]!, this.#options)}</h${level}>\n`
           continue
         }
 
         const alignments =
-          active.lines.length === 1 && this.options.gfm
+          active.lines.length === 1 && this.#options.gfm
             ? parseTableAlignments(line, active.lines[0]!)
             : null
         if (alignments) {
-          this.active = { alignments, type: 'table' }
-          output += `<table>\n<thead>\n${renderTableRow(active.lines[0]!, 'th', alignments, this.options)}</thead>\n<tbody>\n`
+          this.#active = { alignments, type: 'table' }
+          output += `<table>\n<thead>\n${renderTableRow(active.lines[0]!, 'th', alignments, this.#options)}</thead>\n<tbody>\n`
         } else if (line === '') {
-          output += this.finishActive()
+          output += this.#finishActive()
         } else if (startsInterruptingBlock(line)) {
-          output += this.finishActive()
+          output += this.#finishActive()
           reprocess = true
         } else {
           active.lines.push(line)
@@ -174,7 +174,7 @@ export class MarkdownStream {
         } else if (line !== '' && !startsInterruptingBlock(line)) {
           active.lines.push(line)
         } else {
-          output += this.finishActive()
+          output += this.#finishActive()
           reprocess = true
         }
         continue
@@ -195,7 +195,7 @@ export class MarkdownStream {
         ) {
           active.lines.push(line)
         } else {
-          output += this.finishActive()
+          output += this.#finishActive()
           reprocess = true
         }
         continue
@@ -207,7 +207,7 @@ export class MarkdownStream {
         } else if (isIndented(line)) {
           active.lines.push(stripIndent(line))
         } else {
-          output += this.finishActive()
+          output += this.#finishActive()
           reprocess = true
         }
         continue
@@ -223,10 +223,10 @@ export class MarkdownStream {
             ? ''
             : ` class="language-${escapeAttribute(language)}"`
         const highlighter =
-          language !== '' && this.options.codeHighlighter?.has(language)
-            ? this.options.codeHighlighter.createHighlighter(language)
+          language !== '' && this.#options.codeHighlighter?.has(language)
+            ? this.#options.codeHighlighter.createHighlighter(language)
             : null
-        this.active = {
+        this.#active = {
           highlighter,
           length: fence.length,
           marker: fence.marker,
@@ -238,7 +238,7 @@ export class MarkdownStream {
 
       const heading = parseHeading(line)
       if (heading) {
-        output += `<h${heading.level}>${renderInline(heading.content, this.options)}</h${heading.level}>\n`
+        output += `<h${heading.level}>${renderInline(heading.content, this.#options)}</h${heading.level}>\n`
         continue
       }
 
@@ -249,13 +249,13 @@ export class MarkdownStream {
 
       const quote = parseBlockquoteLine(line)
       if (quote !== null) {
-        this.active = { lines: [quote], type: 'blockquote' }
+        this.#active = { lines: [quote], type: 'blockquote' }
         continue
       }
 
       const list = parseListMarker(line)
       if (list) {
-        this.active = {
+        this.#active = {
           indent: list.indent,
           kind: list.kind,
           lines: [line],
@@ -266,28 +266,28 @@ export class MarkdownStream {
       }
 
       if (isIndented(line)) {
-        this.active = { lines: [stripIndent(line)], type: 'indented-code' }
+        this.#active = { lines: [stripIndent(line)], type: 'indented-code' }
         continue
       }
 
-      this.active = { lines: [line], type: 'paragraph' }
+      this.#active = { lines: [line], type: 'paragraph' }
     }
 
     return output
   }
 
-  private finishActive() {
-    const active = this.active
+  #finishActive() {
+    const active = this.#active
     if (!active) return ''
-    this.active = null
+    this.#active = null
 
     switch (active.type) {
       case 'paragraph':
-        return `<p>${renderInline(active.lines.join('\n'), this.options)}</p>\n`
+        return `<p>${renderInline(active.lines.join('\n'), this.#options)}</p>\n`
       case 'blockquote':
-        return `<blockquote>\n${this.renderNested(active.lines.join('\n'))}</blockquote>\n`
+        return `<blockquote>\n${this.#renderNested(active.lines.join('\n'))}</blockquote>\n`
       case 'list':
-        return this.renderList(active)
+        return this.#renderList(active)
       case 'indented-code': {
         const value = active.lines.join('\n').replace(/\n+$/, '')
         return `<pre><code>${escapeHtml(value)}\n</code></pre>\n`
@@ -299,9 +299,9 @@ export class MarkdownStream {
     }
   }
 
-  private renderList(block: ListBlock) {
-    const items = collectListItems(block, this.options.gfm)
-    const hasTasks = this.options.gfm && items.some(item => item.task)
+  #renderList(block: ListBlock) {
+    const items = collectListItems(block, this.#options.gfm)
+    const hasTasks = this.#options.gfm && items.some(item => item.task)
     const loose = items.some(item => item.lines.includes(''))
     const listClass = hasTasks ? ' class="task-list"' : ''
     const start =
@@ -310,12 +310,12 @@ export class MarkdownStream {
 
     for (const item of items) {
       const itemClass =
-        item.task && this.options.gfm ? ' class="task-list-item"' : ''
+        item.task && this.#options.gfm ? ' class="task-list-item"' : ''
       const checkbox =
-        item.task && this.options.gfm
+        item.task && this.#options.gfm
           ? `<input type="checkbox" disabled${item.checked ? ' checked' : ''}> `
           : ''
-      let body = this.renderNested(item.lines.join('\n'))
+      let body = this.#renderNested(item.lines.join('\n'))
       if (checkbox !== '') {
         body = body.startsWith('<p>')
           ? `<p>${checkbox}${body.slice(3)}`
@@ -330,11 +330,11 @@ export class MarkdownStream {
     return `${html}</${block.kind}>\n`
   }
 
-  private renderNested(source: string) {
-    if (this.depth >= 32)
+  #renderNested(source: string) {
+    if (this.#depth >= 32)
       throw new RangeError('Markdown nesting exceeds 32 levels')
-    const stream = new MarkdownStream(this.options)
-    stream.depth = this.depth + 1
+    const stream = new MarkdownStream(this.#options)
+    stream.#depth = this.#depth + 1
     return stream.end(source)
   }
 }
